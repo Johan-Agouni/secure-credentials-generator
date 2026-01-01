@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Générateur Sécurisé</title>
+    
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><defs><linearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'><stop offset='0%25' style='stop-color:%2300d9ff'/><stop offset='100%25' style='stop-color:%230099cc'/></linearGradient></defs><path fill='url(%23g)' d='M12 2C9.243 2 7 4.243 7 7v3H6c-1.103 0-2 .897-2 2v8c0 1.103.897 2 2 2h12c1.103 0 2-.897 2-2v-8c0-1.103-.897-2-2-2h-1V7c0-2.757-2.243-5-5-5zm-3 5c0-1.654 1.346-3 3-3s3 1.346 3 3v3H9V7z'/></svg>">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .matrix-rain {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(20px);
+            padding: 40px;
+            border-radius: 25px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            max-width: 500px;
+            width: 100%;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            position: relative;
+            z-index: 2;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            color: white;
+            font-size: 28px;
+            margin-bottom: 8px;
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+        }
+
+        .header p {
+            text-shadow: 
+                0 0 5px rgba(0, 191, 255, 0.8),
+                0 0 10px rgba(0, 191, 255, 0.6),
+                0 0 15px rgba(0, 191, 255, 0.4),
+                0 2px 8px rgba(0, 0, 0, 0.3) !important;
+            color: #ffffff !important;
+            font-weight: 700 !important;
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+        }
+
+        .username-display {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        #usernameOutput {
+            flex: 1;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 15px;
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            font-family: 'Segoe UI', sans-serif;
+            outline: none;
+        }
+
+        #usernameOutput::placeholder {
+            text-shadow: 
+                0 0 5px rgba(0, 191, 255, 0.8),
+                0 0 10px rgba(0, 191, 255, 0.6) !important;
+            color: #ffffff !important;
+        }
+
+        .copy-btn {
+            padding: 15px 20px;
+            background: rgba(255, 255, 255, 0.25);
+            border: 2px solid rgba(255, 255, 255, 0.4);
+            border-radius: 15px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .copy-btn:hover {
+            background: rgba(255, 255, 255, 0.35);
+            transform: translateY(-2px);
+        }
+
+        .strength-indicator {
+            height: 8px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            margin-bottom: 8px;
+            overflow: hidden;
+        }
+
+        .strength-bar {
+            height: 100%;
+            width: 0;
+            transition: all 0.3s ease;
+            border-radius: 10px;
+        }
+
+        .strength-text {
+            text-align: center;
+            color: white;
+            font-weight: 600;
+            margin-bottom: 25px;
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+        }
+
+        .options {
+            margin-bottom: 25px;
+        }
+
+        .option-group {
+            margin-bottom: 15px;
+        }
+
+        .section-title {
+            color: white;
+            font-weight: 700;
+            margin-bottom: 12px;
+            font-size: 15px;
+            text-shadow: 
+                0 0 3px rgba(0, 191, 255, 0.6),
+                0 0 7px rgba(0, 191, 255, 0.4),
+                0 2px 5px rgba(0, 0, 0, 0.2);
+            user-select: none;
+        }
+
+        /* Masquer les inputs natifs */
+        input[type="radio"],
+        input[type="checkbox"] {
+            display: none;
+        }
+
+        /* Style buttons pour radio buttons */
+        .radio-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .radio-btn {
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.15);
+            border: 2px solid rgba(255, 255, 255, 0.25);
+            border-radius: 12px;
+            color: white;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            user-select: none;
+            text-shadow: 
+                0 0 3px rgba(0, 191, 255, 0.4),
+                0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .radio-btn:hover {
+            background: rgba(255, 255, 255, 0.25);
+            border-color: rgba(255, 255, 255, 0.4);
+            transform: translateY(-2px);
+        }
+
+        input[type="radio"]:checked + .radio-btn {
+            background: linear-gradient(135deg, rgba(0, 217, 255, 0.3), rgba(0, 153, 204, 0.3));
+            border-color: rgba(0, 217, 255, 0.6);
+            box-shadow: 0 0 15px rgba(0, 217, 255, 0.4);
+        }
+
+        /* Toggle pour checkboxes */
+        .toggle-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .toggle-label {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 15px;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: white;
+            font-weight: 600;
+            text-shadow: 
+                0 0 3px rgba(0, 191, 255, 0.6),
+                0 0 7px rgba(0, 191, 255, 0.4),
+                0 2px 5px rgba(0, 0, 0, 0.2);
+            user-select: none;
+        }
+
+        .toggle-label:hover {
+            background: rgba(255, 255, 255, 0.25);
+            border-color: rgba(255, 255, 255, 0.4);
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 50px;
+            height: 26px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 30px;
+            transition: all 0.3s ease;
+            flex-shrink: 0;
+        }
+
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+        }
+
+        input[type="checkbox"]:checked + .toggle-switch {
+            background: linear-gradient(135deg, #00d9ff, #0099cc);
+            box-shadow: 0 0 10px rgba(0, 217, 255, 0.5);
+        }
+
+        input[type="checkbox"]:checked + .toggle-switch::after {
+            left: 27px;
+        }
+
+        .generate-btn {
+            width: 100%;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.3);
+            backdrop-filter: blur(15px);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            border-radius: 15px;
+            font-size: 18px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 15px;
+        }
+
+        .generate-btn:hover {
+            transform: translateY(-2px);
+            background: rgba(255, 255, 255, 0.4);
+            box-shadow: 0 5px 20px rgba(0, 191, 255, 0.3);
+        }
+
+        .back-btn {
+            width: 100%;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(15px);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.4);
+            border-radius: 15px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-shadow: 
+                0 0 5px rgba(0, 191, 255, 0.6),
+                0 0 10px rgba(0, 191, 255, 0.4),
+                0 2px 8px rgba(0, 0, 0, 0.3);
+            text-decoration: none;
+            display: block;
+            text-align: center;
+        }
+
+        .back-btn:hover {
+            transform: translateY(-2px);
+            background: rgba(255, 255, 255, 0.35);
+            border-color: rgba(255, 255, 255, 0.6);
+            box-shadow: 0 5px 20px rgba(0, 191, 255, 0.3);
+        }
+
+        .header h1 i,
+        .copy-btn i {
+            margin-right: 8px;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 25px 20px;
+            }
+
+            .header h1 {
+                font-size: 24px;
+            }
+
+            .header p {
+                font-size: 13px;
+            }
+
+            #usernameOutput {
+                font-size: 14px;
+                padding: 12px;
+            }
+
+            .copy-btn {
+                padding: 12px 16px;
+            }
+
+            .radio-group {
+                grid-template-columns: 1fr;
+            }
+
+            .radio-btn {
+                font-size: 14px;
+                padding: 14px;
+            }
+
+            .toggle-label {
+                padding: 10px 12px;
+                font-size: 14px;
+            }
+
+            .section-title {
+                font-size: 14px;
+            }
+
+            .generate-btn, .back-btn {
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>   
+<body>
+    <div class="matrix-rain" id="matrixRain"></div>
+    
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-user-circle"></i> Générateur de Noms d'Utilisateur</h1>
+            <p>Créez des pseudos uniques et mémorables</p>
+        </div>
+
+        <div class="username-display">
+            <input type="text" id="usernameOutput" readonly placeholder="Votre nom d'utilisateur apparaîtra ici">
+            <button id="copyBtn" class="copy-btn" title="Copier"><i class="fas fa-copy"></i></button>
+        </div>
+
+        <div class="strength-indicator">
+            <div class="strength-bar" id="strengthBar"></div>
+        </div>
+        <p class="strength-text" id="strengthText">Originalité : -</p>
+
+        <div class="options">
+            <div class="option-group">
+                <div class="section-title">Style de génération :</div>
+                <div class="radio-group">
+                    <label>
+                        <input type="radio" name="style" value="adjective-noun" checked>
+                        <div class="radio-btn">Adjectif + Nom</div>
+                    </label>
+                    <label>
+                        <input type="radio" name="style" value="noun-adjective">
+                        <div class="radio-btn">Nom + Adjectif</div>
+                    </label>
+                    <label>
+                        <input type="radio" name="style" value="fantasy">
+                        <div class="radio-btn">Fantaisie</div>
+                    </label>
+                    <label>
+                        <input type="radio" name="style" value="tech">
+                        <div class="radio-btn">Technologique</div>
+                    </label>
+                </div>
+            </div>
+
+            <div class="option-group">
+                <div class="section-title">Options :</div>
+                <div class="toggle-group">
+                    <label class="toggle-label" for="addNumbers">
+                        <span>Ajouter des chiffres</span>
+                        <input type="checkbox" id="addNumbers">
+                        <div class="toggle-switch"></div>
+                    </label>
+
+                    <label class="toggle-label" for="addUnderscore">
+                        <span>Ajouter un underscore (_)</span>
+                        <input type="checkbox" id="addUnderscore">
+                        <div class="toggle-switch"></div>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <button id="generateBtn" class="generate-btn">Générer un nom d'utilisateur</button>
+
+        <a href="index.html" class="back-btn"><i class="fas fa-arrow-left"></i> Retour à l'accueil</a>
+    </div>
+
+    <script>
+        // Effet Matrix Rain
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        const matrixRain = document.getElementById('matrixRain');
+        matrixRain.appendChild(canvas);
+
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        const matrix = "01";
+        const fontSize = 14;
+        const columns = canvas.width / fontSize;
+        const drops = [];
+
+        for (let i = 0; i < columns; i++) {
+            drops[i] = Math.random() * canvas.height;
+        }
+
+        function drawMatrix() {
+            ctx.fillStyle = 'rgba(102, 126, 234, 0.05)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#00d9ff';
+            ctx.font = fontSize + 'px monospace';
+
+            for (let i = 0; i < drops.length; i++) {
+                const text = matrix.charAt(Math.floor(Math.random() * matrix.length));
+                ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+
+                if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+                    drops[i] = 0;
+                }
+                drops[i]++;
+            }
+        }
+
+        setInterval(drawMatrix, 50);
+
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+
+        // Générateur de noms d'utilisateur
+        const usernameOutput = document.getElementById('usernameOutput');
+        const generateBtn = document.getElementById('generateBtn');
+        const copyBtn = document.getElementById('copyBtn');
+        const strengthBar = document.getElementById('strengthBar');
+        const strengthText = document.getElementById('strengthText');
+        const addNumbers = document.getElementById('addNumbers');
+        const addUnderscore = document.getElementById('addUnderscore');
+
+        const adjectives = ['Brave', 'Swift', 'Silent', 'Dark', 'Bright', 'Wild', 'Calm', 'Bold', 'Fierce', 'Gentle', 'Ancient', 'Mystic', 'Noble', 'Savage', 'Cosmic', 'Digital', 'Epic', 'Frozen', 'Golden', 'Hidden', 'Iron', 'Jade', 'Lunar', 'Mighty', 'Neon', 'Phantom', 'Quick', 'Royal', 'Shadow', 'Thunder', 'Velvet', 'Wicked', 'Crimson', 'Azure', 'Emerald', 'Obsidian', 'Crystal', 'Eternal', 'Flaming', 'Glorious'];
+        const nouns = ['Phoenix', 'Dragon', 'Wolf', 'Eagle', 'Tiger', 'Falcon', 'Raven', 'Lion', 'Bear', 'Hawk', 'Knight', 'Warrior', 'Hunter', 'Ranger', 'Mage', 'Assassin', 'Guardian', 'Champion', 'Sentinel', 'Warden', 'Storm', 'Thunder', 'Lightning', 'Blaze', 'Frost', 'Shadow', 'Spirit', 'Demon', 'Angel', 'Titan', 'Nova', 'Vortex', 'Eclipse', 'Comet', 'Nebula', 'Galaxy', 'Cosmos', 'Inferno', 'Tempest', 'Cipher'];
+        const fantasyPrefixes = ['Ael', 'Zar', 'Kyr', 'Dra', 'Thal', 'Mor', 'Eld', 'Vex', 'Nyx', 'Rav', 'Syl', 'Tor', 'Vel', 'Xan', 'Lyr', 'Cael', 'Dor', 'Fen', 'Gal', 'Hal'];
+        const fantasySuffixes = ['ion', 'thor', 'dor', 'wyn', 'mar', 'ros', 'ith', 'ael', 'ris', 'nor', 'ion', 'drim', 'thar', 'lius', 'rian', 'vex', 'zor', 'kir', 'moth', 'grim'];
+        const techPrefixes = ['Cyber', 'Nano', 'Tech', 'Digi', 'Neuro', 'Byte', 'Pixel', 'Quantum', 'Matrix', 'Vector', 'Crypto', 'Synth', 'Proto', 'Meta', 'Hyper', 'Ultra', 'Mega', 'Giga', 'Tera', 'Omega'];
+        const techSuffixes = ['Core', 'Node', 'Net', 'Link', 'Grid', 'Wave', 'Flux', 'Pulse', 'Surge', 'Storm', 'Prime', 'Nova', 'Zero', 'One', 'Pro', 'Max', 'Ultra', 'Alpha', 'Beta'];
+
+        function generateUsername() {
+            const style = document.querySelector('input[name="style"]:checked').value;
+            let username = '';
+
+            switch(style) {
+                case 'adjective-noun':
+                    username = adjectives[Math.floor(Math.random() * adjectives.length)] + nouns[Math.floor(Math.random() * nouns.length)];
+                    break;
+                case 'noun-adjective':
+                    username = nouns[Math.floor(Math.random() * nouns.length)] + adjectives[Math.floor(Math.random() * adjectives.length)];
+                    break;
+                case 'fantasy':
+                    const prefix = fantasyPrefixes[Math.floor(Math.random() * fantasyPrefixes.length)];
+                    const suffix = fantasySuffixes[Math.floor(Math.random() * fantasySuffixes.length)];
+                    const middle = ['a','e','i','o','u'][Math.floor(Math.random() * 5)];
+                    
+                    if (addUnderscore.checked) {
+                        username = prefix + '_' + middle + suffix;
+                    } else {
+                        username = prefix + middle + suffix;
+                    }
+                    break;
+                case 'tech':
+                    username = techPrefixes[Math.floor(Math.random() * techPrefixes.length)] + techSuffixes[Math.floor(Math.random() * techSuffixes.length)];
+                    break;
+            }
+
+            if (addUnderscore.checked && style !== 'fantasy') {
+                const parts = username.match(/[A-Z][a-z]+/g) || [username];
+                username = parts.join('_');
+            }
+
+            if (addNumbers.checked) {
+                username += Math.floor(Math.random() * 9000) + 1000;
+            }
+
+            usernameOutput.value = username;
+            updateStrength(username);
+        }
+
+        function updateStrength(username) {
+            let strength = 0;
+            if (username.length >= 8) strength += 25;
+            if (username.length >= 12) strength += 25;
+            if (/[A-Z]/.test(username)) strength += 20;
+            if (/[a-z]/.test(username)) strength += 15;
+            if (/[0-9]/.test(username)) strength += 15;
+
+            strengthBar.style.width = strength + '%';
+
+            if (strength < 40) {
+                strengthBar.style.background = '#ff4444';
+                strengthText.textContent = 'Originalité : Faible';
+            } else if (strength < 70) {
+                strengthBar.style.background = '#ffaa00';
+                strengthText.textContent = 'Originalité : Moyenne';
+            } else if (strength < 90) {
+                strengthBar.style.background = '#44ff44';
+                strengthText.textContent = 'Originalité : Bonne';
+            } else {
+                strengthBar.style.background = '#00ff88';
+                strengthText.textContent = 'Originalité : Excellente';
+            }
+        }
+
+        copyBtn.addEventListener('click', () => {
+            if (usernameOutput.value) {
+                navigator.clipboard.writeText(usernameOutput.value).then(() => {
+                    copyBtn.innerHTML = '<i class="fas fa-check"></i>';
+                    setTimeout(() => {
+                        copyBtn.innerHTML = '<i class="fas fa-copy"></i>';
+                    }, 2000);
+                });
+            }
+        });
+
+        generateBtn.addEventListener('click', generateUsername);
+
+        // Générer un nom au chargement
+        generateUsername();
+    </script>
+</body>
+</html>
